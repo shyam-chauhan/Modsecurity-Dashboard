@@ -71,8 +71,7 @@ async def dashboard(request: Request):
         ip_counts[entry.ip_address] = ip_counts.get(entry.ip_address, 0) + 1
     top_ips_data = [{"ip": ip, "count": count} for ip, count in sorted(ip_counts.items(), key=lambda x: x[1], reverse=True)[:10]]
 
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "dashboard.html", {
         "normal_traffic": normal_traffic,
         "blocked_requests": blocked_requests,
         "attack_attempts": attack_attempts,
