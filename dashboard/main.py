@@ -49,7 +49,7 @@ async def dashboard(request: Request):
     
     total_requests = len(LOG_ENTRIES)
     blocked_requests = len([entry for entry in LOG_ENTRIES if entry.status in (406, 414)])
-    attack_attempts = len([entry for entry in LOG_ENTRIES if entry.status == 403])
+    attack_attempts = len([entry for entry in LOG_ENTRIES if entry.status in (403, 429)])
     normal_traffic = total_requests - blocked_requests - attack_attempts
 
     recent_logs = sorted(LOG_ENTRIES, key=lambda x: x.timestamp, reverse=True)[:50]
@@ -185,7 +185,7 @@ async def export_pdf(
     entries = filter_logs(log_type, rule_filter, severity_filter)
     total_requests = len(LOG_ENTRIES)
     blocked_requests = len([e for e in LOG_ENTRIES if e.status in (406, 414)])
-    attack_attempts = len([e for e in LOG_ENTRIES if e.status == 403])
+    attack_attempts = len([e for e in LOG_ENTRIES if e.status in (403, 429)])
 
     title_map = {
         "total": "Total Requests",
@@ -209,7 +209,7 @@ async def export_pdf(
         metrics_data = {
             "normal_traffic": len([e for e in entries if 200 <= e.status <= 399 or e.status in (401, 404)]),
             "blocked_requests": len([e for e in entries if e.status in (406, 414)]),
-            "attack_attempts": len([e for e in entries if e.status == 403])
+            "attack_attempts": len([e for e in entries if e.status in (403, 429)])
         }
         generate_donut_chart_image(metrics_data, donut_chart_path)
 
@@ -283,7 +283,7 @@ def filter_logs(log_type: str, rule_filter: Optional[str], severity_filter: Opti
     elif log_type == "blocked":
         entries = [e for e in entries if e.status in (406, 414)]
     elif log_type == "attack":
-        entries = [e for e in entries if e.status == 403]
+        entries = [e for e in entries if e.status in (403, 429)]
     elif log_type != "total":
         raise HTTPException(status_code=400, detail="Invalid log type")
 
@@ -380,7 +380,7 @@ def generate_donut_chart_image(metrics_data, output_path):
     plt.close()
 
 def get_matplotlib_color(status_code):
-    if status_code == 403:
+    if status_code in (403, 429):
         return '#dc3545'
     if status_code in (406, 414):
         return '#ffc107'
@@ -807,7 +807,7 @@ async def save_custom_rule(rule_data: dict):
         print("[INFO] Applied internal config changes")
 
         # Gracefully reload Apache to apply changes
-        result = subprocess.run(["apachectl", "graceful"], capture_output=True, text=True)
+        result = subprocess.run(["apache2ctl", "graceful"], capture_output=True, text=True)
         if result.returncode != 0:
             print(f"[ERROR] Apache reload failed: {result.stderr.strip()}")
             raise Exception(f"Apache reload failed: {result.stderr.strip()}")
