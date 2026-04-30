@@ -108,8 +108,7 @@ async def logs_page(
     }
     title = title_map.get(log_type, "Unknown Log Type")
 
-    return templates.TemplateResponse("logs.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "logs.html", {
         "entries": paginated,
         "page": page,
         "has_next": page < total_pages,
@@ -450,7 +449,7 @@ async def update_rule_action(rule_id: str, req: UpdateActionRequest):
 
 @app.get("/rules", response_class=HTMLResponse)
 async def rules_page(request: Request):
-    return templates.TemplateResponse("rules_management.html", {"request": request})
+    return templates.TemplateResponse(request, "rules_management.html")
 
 # === Rule Management Logic ===
 
